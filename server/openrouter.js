@@ -1,4 +1,5 @@
 const db = require('./db');
+const { postComment, isUserAuthConfigured } = require('./reddit');
 
 const MODEL = 'gpt-4o-mini';
 const API_URL = 'https://api.openai.com/v1/chat/completions';
@@ -128,6 +129,18 @@ async function scoreAndDraftPosts(postIds) {
         const comment = await draftComment(post);
         db.updatePost(id, { drafted_comment: comment });
         console.log(`[AI] [${i + 1}/${total}] ✓ Comment drafted (${comment.length} chars)`);
+
+        // Auto-post if user is authenticated
+        if (isUserAuthConfigured()) {
+          try {
+            console.log(`[AI] [${i + 1}/${total}] Auto-posting to Reddit...`);
+            await postComment(post.reddit_id, comment);
+            db.updatePost(id, { status: 'approved' });
+            console.log(`[AI] [${i + 1}/${total}] ✓ Posted to Reddit`);
+          } catch (postErr) {
+            console.error(`[AI] [${i + 1}/${total}] ✗ Post failed: ${postErr.message}`);
+          }
+        }
       }
 
       results.push({ id, score, reason });
