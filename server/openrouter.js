@@ -130,8 +130,8 @@ async function scoreAndDraftPosts(postIds) {
         db.updatePost(id, { drafted_comment: comment });
         console.log(`[AI] [${i + 1}/${total}] ✓ Comment drafted (${comment.length} chars)`);
 
-        // Auto-post if user is authenticated
-        if (isUserAuthConfigured()) {
+        // Auto-post only for high-scored posts
+        if (score === 'high' && isUserAuthConfigured()) {
           try {
             console.log(`[AI] [${i + 1}/${total}] Auto-posting to Reddit...`);
             await postComment(post.reddit_id, comment);
