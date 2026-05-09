@@ -92,7 +92,7 @@ Write a Reddit comment that:
 2. If relevant, naturally mentions this product as something that could help — don't force it
 3. Sounds like a real developer, not marketing copy
 4. Is 3-5 sentences max
-5. Ends with the URL only if mentioning the product
+5. Ends with the full URL (including https://) only if mentioning the product — never just the domain name
 
 Reply with ONLY the comment text. No quotes. No preamble.`;
 
@@ -134,7 +134,7 @@ async function scoreAndDraftPosts(postIds) {
         if (score === 'high' && isUserAuthConfigured()) {
           try {
             console.log(`[AI] [${i + 1}/${total}] Auto-posting to Reddit...`);
-            await postComment(post.reddit_id, comment);
+            await postComment(post.id, comment);
             db.updatePost(id, { status: 'approved' });
             console.log(`[AI] [${i + 1}/${total}] ✓ Posted to Reddit`);
           } catch (postErr) {
