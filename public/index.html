@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Reddit Lead Agent</title>
+  <link rel="stylesheet" href="/style.css" />
+</head>
+<body>
+  <div class="app">
+    <div class="header">
+      <h1>📡 Reddit Lead Agent</h1>
+      <p>Finds relevant posts, drafts comments. You review and copy to post.</p>
+    </div>
+
+    <div class="metrics">
+      <div class="metric"><div class="metric-label">Scanned</div><div class="metric-value" id="m-scanned">0</div></div>
+      <div class="metric"><div class="metric-label">Relevant</div><div class="metric-value amber" id="m-relevant">0</div></div>
+      <div class="metric"><div class="metric-label">Approved</div><div class="metric-value green" id="m-approved">0</div></div>
+      <div class="metric"><div class="metric-label">Skipped</div><div class="metric-value" id="m-skipped">0</div></div>
+    </div>
+
+    <div id="scheduler-status" class="scheduler-info">
+      <span class="dot off"></span> Loading scheduler...
+    </div>
+
+    <div id="reddit-auth-status" class="scheduler-info">
+      <span class="dot off"></span> Checking Reddit login...
+    </div>
+
+    <div class="tab-bar">
+      <div class="tab active" data-tab="queue" onclick="switchTab('queue')">Queue</div>
+      <div class="tab" data-tab="approved" onclick="switchTab('approved')">Approved</div>
+      <div class="tab" data-tab="history" onclick="switchTab('history')">Scan History</div>
+      <div class="tab" data-tab="config" onclick="switchTab('config')">Settings</div>
+    </div>
+
+    <!-- Queue Tab -->
+    <div id="tab-queue">
+      <div class="controls">
+        <select id="filter-sub" onchange="loadPosts()">
+          <option value="all">All subreddits</option>
+        </select>
+        <select id="filter-score" onchange="loadPosts()">
+          <option value="all">All relevance</option>
+          <option value="high">High only</option>
+          <option value="med">Med+</option>
+        </select>
+        <div class="controls-right">
+          <button class="btn primary" id="scan-btn" onclick="startScan()">↻ Scan Reddit</button>
+        </div>
+      </div>
+      <div class="posts" id="post-list"></div>
+    </div>
+
+    <!-- Approved Tab -->
+    <div id="tab-approved" style="display:none">
+      <div class="posts" id="approved-list"></div>
+    </div>
+
+    <!-- Scan History Tab -->
+    <div id="tab-history" style="display:none">
+      <div id="scan-log-list"></div>
+    </div>
+
+    <!-- Settings Tab -->
+    <div id="tab-config" style="display:none">
+      <div class="config-card">
+        <h3>Reddit Account</h3>
+        <p id="reddit-login-status" style="font-size:13px;color:#666;margin-bottom:10px;">Checking...</p>
+        <button class="btn primary" id="reddit-login-btn" onclick="loginReddit()" style="display:none;">🔗 Login to Reddit</button>
+      </div>
+
+      <div class="config-card">
+        <h3>Subreddits to scan</h3>
+        <div class="tag-list" id="sub-tags"></div>
+        <div style="display:flex;gap:6px;margin-top:10px;">
+          <input id="new-sub" placeholder="e.g. whatsapp" style="flex:1;font-size:13px;padding:6px 10px;border-radius:6px;border:1px solid #d1d5db;background:#fff;color:#1a1a1a;" onkeydown="if(event.key==='Enter')addSub()" />
+          <button class="btn" onclick="addSub()">+ Add</button>
+        </div>
+      </div>
+
+      <div class="config-card">
+        <h3>Your product context</h3>
+        <div class="field">
+          <label>Product URL</label>
+          <input id="cfg-url" />
+        </div>
+        <div class="field">
+          <label>What it does (used in AI prompts)</label>
+          <textarea id="cfg-desc"></textarea>
+        </div>
+        <div class="field">
+          <label>Comment style hint</label>
+          <textarea id="cfg-style"></textarea>
+        </div>
+      </div>
+
+      <div class="config-card">
+        <h3>Scheduler</h3>
+        <div class="field">
+          <label>Cron interval</label>
+          <input id="cfg-interval" placeholder="0 */2 * * *" />
+        </div>
+        <div class="field">
+          <label>Max post age (hours)</label>
+          <input id="cfg-age" type="number" min="1" max="168" />
+        </div>
+      </div>
+
+      <button class="btn primary" onclick="saveConfig()">✓ Save settings</button>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+  <script src="/app.js"></script>
+</body>
+</html>

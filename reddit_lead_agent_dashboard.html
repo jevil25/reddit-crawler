@@ -1,0 +1,454 @@
+
+<h2 class="sr-only">Reddit Lead Agent Dashboard — find relevant posts and draft comments for your WhatsApp API</h2>
+
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: var(--font-sans); }
+
+.app { padding: 1.5rem 0; max-width: 680px; }
+
+.header { margin-bottom: 1.5rem; }
+.header h1 { font-size: 18px; font-weight: 500; color: var(--color-text-primary); }
+.header p { font-size: 13px; color: var(--color-text-secondary); margin-top: 4px; }
+
+.metrics { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 1.5rem; }
+.metric { background: var(--color-background-secondary); border-radius: var(--border-radius-md); padding: 12px; }
+.metric-label { font-size: 11px; color: var(--color-text-secondary); text-transform: uppercase; letter-spacing: 0.05em; }
+.metric-value { font-size: 22px; font-weight: 500; color: var(--color-text-primary); margin-top: 4px; }
+.metric-value.green { color: var(--color-text-success); }
+.metric-value.amber { color: var(--color-text-warning); }
+
+.controls { display: flex; gap: 8px; align-items: center; margin-bottom: 1.25rem; flex-wrap: wrap; }
+.controls select { font-size: 13px; padding: 6px 10px; border-radius: var(--border-radius-md); border: 0.5px solid var(--color-border-secondary); background: var(--color-background-primary); color: var(--color-text-primary); cursor: pointer; }
+.controls-right { margin-left: auto; }
+.btn { font-size: 13px; padding: 6px 14px; border-radius: var(--border-radius-md); border: 0.5px solid var(--color-border-secondary); background: var(--color-background-primary); color: var(--color-text-primary); cursor: pointer; display: inline-flex; align-items: center; gap: 6px; }
+.btn:hover { background: var(--color-background-secondary); }
+.btn.primary { background: var(--color-text-primary); color: var(--color-background-primary); border-color: transparent; }
+.btn.primary:hover { opacity: 0.85; }
+.btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+.tab-bar { display: flex; gap: 0; border-bottom: 0.5px solid var(--color-border-tertiary); margin-bottom: 1.25rem; }
+.tab { font-size: 13px; padding: 8px 16px; cursor: pointer; color: var(--color-text-secondary); border-bottom: 2px solid transparent; margin-bottom: -0.5px; }
+.tab.active { color: var(--color-text-primary); border-bottom-color: var(--color-text-primary); }
+
+.posts { display: flex; flex-direction: column; gap: 10px; }
+
+.post-card { background: var(--color-background-primary); border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-lg); padding: 1rem 1.25rem; }
+.post-card.approved { border-color: var(--color-border-success); }
+.post-card.skipped { opacity: 0.5; }
+
+.post-top { display: flex; align-items: flex-start; gap: 10px; margin-bottom: 10px; }
+.post-meta { flex: 1; }
+.post-subreddit { font-size: 11px; font-weight: 500; color: var(--color-text-secondary); margin-bottom: 3px; }
+.post-title { font-size: 14px; font-weight: 500; color: var(--color-text-primary); line-height: 1.4; cursor: pointer; }
+.post-title:hover { color: var(--color-text-info); }
+.post-stats { font-size: 11px; color: var(--color-text-tertiary); margin-top: 4px; display: flex; gap: 10px; }
+
+.score-badge { font-size: 11px; font-weight: 500; padding: 3px 8px; border-radius: 99px; white-space: nowrap; }
+.score-high { background: var(--color-background-success); color: var(--color-text-success); }
+.score-med { background: var(--color-background-warning); color: var(--color-text-warning); }
+.score-low { background: var(--color-background-secondary); color: var(--color-text-secondary); }
+
+.comment-box { background: var(--color-background-secondary); border-radius: var(--border-radius-md); padding: 10px 12px; font-size: 13px; color: var(--color-text-primary); line-height: 1.6; margin-bottom: 10px; position: relative; }
+.comment-box textarea { width: 100%; background: transparent; border: none; outline: none; font-size: 13px; color: var(--color-text-primary); line-height: 1.6; resize: vertical; min-height: 80px; font-family: var(--font-sans); }
+
+.comment-label { font-size: 11px; color: var(--color-text-secondary); margin-bottom: 6px; display: flex; align-items: center; gap: 6px; }
+.comment-label i { font-size: 14px; }
+
+.post-actions { display: flex; gap: 8px; align-items: center; }
+.post-actions-right { margin-left: auto; display: flex; gap: 6px; }
+
+.status-tag { font-size: 11px; padding: 3px 8px; border-radius: 99px; }
+.status-pending { background: var(--color-background-warning); color: var(--color-text-warning); }
+.status-approved { background: var(--color-background-success); color: var(--color-text-success); }
+.status-skipped { background: var(--color-background-secondary); color: var(--color-text-secondary); }
+
+.empty { text-align: center; padding: 3rem 1rem; color: var(--color-text-secondary); font-size: 14px; }
+.empty i { font-size: 32px; display: block; margin-bottom: 8px; }
+
+.spinner { width: 14px; height: 14px; border: 2px solid var(--color-border-tertiary); border-top-color: var(--color-text-primary); border-radius: 50%; animation: spin 0.7s linear infinite; display: inline-block; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.config-card { background: var(--color-background-primary); border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-lg); padding: 1.25rem; margin-bottom: 1rem; }
+.config-card h3 { font-size: 14px; font-weight: 500; margin-bottom: 12px; color: var(--color-text-primary); }
+.field { margin-bottom: 12px; }
+.field label { font-size: 12px; color: var(--color-text-secondary); display: block; margin-bottom: 4px; }
+.field input, .field textarea { width: 100%; font-size: 13px; padding: 7px 10px; border-radius: var(--border-radius-md); border: 0.5px solid var(--color-border-secondary); background: var(--color-background-primary); color: var(--color-text-primary); font-family: var(--font-sans); }
+.field textarea { min-height: 70px; resize: vertical; }
+.tag-list { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; }
+.tag { font-size: 12px; padding: 3px 10px; background: var(--color-background-secondary); color: var(--color-text-secondary); border-radius: 99px; display: flex; align-items: center; gap: 4px; cursor: pointer; }
+.tag i { font-size: 12px; }
+.tag:hover { background: var(--color-background-danger); color: var(--color-text-danger); }
+
+.copy-toast { position: fixed; bottom: 20px; right: 20px; background: var(--color-text-primary); color: var(--color-background-primary); padding: 8px 16px; border-radius: var(--border-radius-md); font-size: 13px; opacity: 0; transition: opacity 0.2s; pointer-events: none; z-index: 99; }
+.copy-toast.show { opacity: 1; }
+</style>
+
+<div class="app">
+
+<div class="header">
+  <h1><i class="ti ti-brand-reddit" aria-hidden="true" style="font-size:20px;vertical-align:-3px;margin-right:6px;"></i>Reddit Lead Agent</h1>
+  <p>Finds relevant posts, drafts comments. You review and copy to post.</p>
+</div>
+
+<div class="metrics">
+  <div class="metric"><div class="metric-label">Scanned</div><div class="metric-value" id="m-scanned">0</div></div>
+  <div class="metric"><div class="metric-label">Relevant</div><div class="metric-value amber" id="m-relevant">0</div></div>
+  <div class="metric"><div class="metric-label">Approved</div><div class="metric-value green" id="m-approved">0</div></div>
+  <div class="metric"><div class="metric-label">Skipped</div><div class="metric-value" id="m-skipped">0</div></div>
+</div>
+
+<div class="tab-bar">
+  <div class="tab active" onclick="switchTab('queue', this)">Queue</div>
+  <div class="tab" onclick="switchTab('approved', this)">Approved</div>
+  <div class="tab" onclick="switchTab('config', this)">Settings</div>
+</div>
+
+<div id="tab-queue">
+  <div class="controls">
+    <select id="filter-sub" onchange="renderQueue()">
+      <option value="all">All subreddits</option>
+    </select>
+    <select id="filter-score" onchange="renderQueue()">
+      <option value="all">All relevance</option>
+      <option value="high">High only</option>
+      <option value="med">Med+</option>
+    </select>
+    <div class="controls-right">
+      <button class="btn primary" id="scan-btn" onclick="startScan()">
+        <i class="ti ti-refresh" aria-hidden="true"></i> Scan Reddit
+      </button>
+    </div>
+  </div>
+  <div class="posts" id="post-list"></div>
+</div>
+
+<div id="tab-approved" style="display:none">
+  <div class="posts" id="approved-list"></div>
+</div>
+
+<div id="tab-config" style="display:none">
+  <div class="config-card">
+    <h3>Subreddits to scan</h3>
+    <div class="tag-list" id="sub-tags"></div>
+    <div style="display:flex;gap:6px;margin-top:10px;">
+      <input id="new-sub" placeholder="e.g. whatsapp" style="flex:1;font-size:13px;padding:6px 10px;border-radius:var(--border-radius-md);border:0.5px solid var(--color-border-secondary);background:var(--color-background-primary);color:var(--color-text-primary);" onkeydown="if(event.key==='Enter')addSub()" />
+      <button class="btn" onclick="addSub()"><i class="ti ti-plus" aria-hidden="true"></i></button>
+    </div>
+  </div>
+  <div class="config-card">
+    <h3>Your product context</h3>
+    <div class="field">
+      <label>Product URL</label>
+      <input id="cfg-url" value="whatsapp-messaging.retentionstack.agency" />
+    </div>
+    <div class="field">
+      <label>What it does (used in prompt)</label>
+      <textarea id="cfg-desc">A WhatsApp Messaging Bot API on RapidAPI that lets developers send messages, build bots, and automate WhatsApp workflows without the hassle of setting up their own infrastructure.</textarea>
+    </div>
+    <div class="field">
+      <label>Comment style hint</label>
+      <textarea id="cfg-style">Be helpful and genuine. Answer their actual question first. Mention the API naturally at the end only if it directly solves their problem. No hard sell.</textarea>
+    </div>
+    <button class="btn primary" onclick="saveConfig()"><i class="ti ti-check" aria-hidden="true"></i> Save settings</button>
+  </div>
+  <div class="config-card">
+    <h3>Anthropic API key</h3>
+    <div class="field">
+      <label>Used to draft comments</label>
+      <input id="cfg-key" type="password" placeholder="sk-ant-..." />
+    </div>
+    <p style="font-size:12px;color:var(--color-text-secondary);margin-top:6px;">Stored in memory only, never sent anywhere except api.anthropic.com</p>
+  </div>
+</div>
+
+</div>
+
+<div class="copy-toast" id="copy-toast">Copied to clipboard</div>
+
+<script>
+const DEMO_POSTS = [
+  {
+    id: 1, sub: "r/entrepreneur", title: "Best way to send WhatsApp messages programmatically for my SaaS notifications?", body: "I'm building a SaaS and want to send transactional messages via WhatsApp. Twilio Business API requires a business account approval which takes weeks. Any faster alternatives?", upvotes: 47, comments: 12, score: "high", status: "pending", draftedComment: "", url: "https://reddit.com"
+  },
+  {
+    id: 2, sub: "r/nocode", title: "Is there an easy WhatsApp API I can plug into Make.com?", body: "I've seen Twilio but it's overkill for my use case. I just need to send messages from a webhook trigger. Does anyone have a simpler API recommendation?", upvotes: 23, comments: 8, score: "high", status: "pending", draftedComment: "", url: "https://reddit.com"
+  },
+  {
+    id: 3, sub: "r/SaaS", title: "How are you handling WhatsApp notifications for your users?", body: "Email open rates are terrible. Thinking about switching to WhatsApp for user notifications. What's everyone using? Looking for something dev-friendly with good docs.", upvotes: 89, comments: 31, score: "high", status: "pending", draftedComment: "", url: "https://reddit.com"
+  },
+  {
+    id: 4, sub: "r/whatsapp", title: "WhatsApp bot for my restaurant — where do I even start?", body: "I run a small restaurant and want a WhatsApp bot that can take orders and answer FAQs. I'm not a developer but I can follow tutorials. Any recommended APIs or platforms?", upvotes: 14, comments: 5, score: "med", status: "pending", draftedComment: "", url: "https://reddit.com"
+  },
+  {
+    id: 5, sub: "r/webdev", title: "Comparing WhatsApp Business API providers — any hidden gotchas?", body: "360dialog, Twilio, Meta direct — each has tradeoffs. Looking for honest takes from devs who've shipped real projects. Cost, reliability, rate limits etc.", upvotes: 62, comments: 19, score: "med", status: "pending", draftedComment: "", url: "https://reddit.com"
+  }
+];
+
+let posts = [];
+let config = {
+  subreddits: ["whatsapp","nocode","SaaS","entrepreneur","webdev","n8n","zapier","learnprogramming","selfhosted"],
+  url: "whatsapp-messaging.retentionstack.agency",
+  desc: "A WhatsApp Messaging Bot API on RapidAPI that lets developers send messages, build bots, and automate WhatsApp workflows without the hassle of setting up their own infrastructure.",
+  style: "Be helpful and genuine. Answer their actual question first. Mention the API naturally at the end only if it directly solves their problem. No hard sell.",
+  apiKey: ""
+};
+let scanning = false;
+let scanIdx = 0;
+
+function updateMetrics() {
+  document.getElementById("m-scanned").textContent = posts.length;
+  document.getElementById("m-relevant").textContent = posts.filter(p => p.score !== "low").length;
+  document.getElementById("m-approved").textContent = posts.filter(p => p.status === "approved").length;
+  document.getElementById("m-skipped").textContent = posts.filter(p => p.status === "skipped").length;
+}
+
+function renderSubTags() {
+  const el = document.getElementById("sub-tags");
+  el.innerHTML = config.subreddits.map(s =>
+    `<div class="tag" onclick="removeSub('${s}')">r/${s} <i class="ti ti-x" aria-hidden="true"></i></div>`
+  ).join("");
+  const sel = document.getElementById("filter-sub");
+  const cur = sel.value;
+  sel.innerHTML = `<option value="all">All subreddits</option>` +
+    config.subreddits.map(s => `<option value="r/${s}" ${cur==="r/"+s?"selected":""}>${"r/"+s}</option>`).join("");
+}
+
+function addSub() {
+  const inp = document.getElementById("new-sub");
+  const val = inp.value.trim().replace(/^r\//,"");
+  if (val && !config.subreddits.includes(val)) {
+    config.subreddits.push(val);
+    inp.value = "";
+    renderSubTags();
+  }
+}
+
+function removeSub(s) {
+  config.subreddits = config.subreddits.filter(x => x !== s);
+  renderSubTags();
+}
+
+function saveConfig() {
+  config.url = document.getElementById("cfg-url").value;
+  config.desc = document.getElementById("cfg-desc").value;
+  config.style = document.getElementById("cfg-style").value;
+  config.apiKey = document.getElementById("cfg-key").value;
+  showToast("Settings saved");
+}
+
+function switchTab(name, el) {
+  ["queue","approved","config"].forEach(t => {
+    document.getElementById("tab-"+t).style.display = t===name?"block":"none";
+  });
+  document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
+  el.classList.add("active");
+  if (name === "approved") renderApproved();
+}
+
+function getScoreClass(score) {
+  return score === "high" ? "score-high" : score === "med" ? "score-med" : "score-low";
+}
+
+function renderQueue() {
+  const subFilter = document.getElementById("filter-sub").value;
+  const scoreFilter = document.getElementById("filter-score").value;
+  const list = document.getElementById("post-list");
+  let filtered = posts.filter(p => p.status !== "approved");
+  if (subFilter !== "all") filtered = filtered.filter(p => p.sub === subFilter);
+  if (scoreFilter === "high") filtered = filtered.filter(p => p.score === "high");
+  if (scoreFilter === "med") filtered = filtered.filter(p => p.score !== "low");
+  if (filtered.length === 0) {
+    list.innerHTML = `<div class="empty"><i class="ti ti-inbox" aria-hidden="true"></i>No posts yet. Hit "Scan Reddit" to find leads.</div>`;
+    return;
+  }
+  list.innerHTML = filtered.map(p => renderPostCard(p)).join("");
+}
+
+function renderPostCard(p) {
+  const isDrafting = p._drafting;
+  const hasComment = p.draftedComment && p.draftedComment.length > 0;
+  return `<div class="post-card ${p.status}" id="card-${p.id}">
+    <div class="post-top">
+      <div class="post-meta">
+        <div class="post-subreddit">${p.sub}</div>
+        <div class="post-title" onclick="openLink('${p.url}')">${p.title}</div>
+        <div class="post-stats">
+          <span><i class="ti ti-arrow-up" aria-hidden="true" style="font-size:11px;"></i> ${p.upvotes}</span>
+          <span><i class="ti ti-message" aria-hidden="true" style="font-size:11px;"></i> ${p.comments} comments</span>
+        </div>
+      </div>
+      <span class="score-badge ${getScoreClass(p.score)}">${p.score === "high" ? "High fit" : p.score === "med" ? "Medium fit" : "Low fit"}</span>
+    </div>
+    ${hasComment || isDrafting ? `
+    <div class="comment-box">
+      <div class="comment-label"><i class="ti ti-robot" aria-hidden="true"></i> Drafted comment ${isDrafting ? '<span class="spinner" style="margin-left:4px;"></span>' : ''}</div>
+      ${isDrafting ? '<div style="color:var(--color-text-secondary);font-size:13px;min-height:60px;">Drafting with Claude...</div>' :
+        `<textarea id="ta-${p.id}" onchange="updateComment(${p.id}, this.value)">${escHtml(p.draftedComment)}</textarea>`}
+    </div>` : ''}
+    <div class="post-actions">
+      <span class="status-tag status-${p.status}">${p.status}</span>
+      <div class="post-actions-right">
+        ${!hasComment && !isDrafting ? `<button class="btn" onclick="draftComment(${p.id})"><i class="ti ti-robot" aria-hidden="true"></i> Draft comment</button>` : ''}
+        ${hasComment && p.status === "pending" ? `
+          <button class="btn" onclick="copyComment(${p.id})"><i class="ti ti-copy" aria-hidden="true"></i> Copy</button>
+          <button class="btn" onclick="skipPost(${p.id})"><i class="ti ti-x" aria-hidden="true"></i> Skip</button>
+          <button class="btn primary" onclick="approvePost(${p.id})"><i class="ti ti-check" aria-hidden="true"></i> Approve</button>
+        ` : ''}
+        ${p.status === "skipped" ? `<button class="btn" onclick="restorePost(${p.id})">Restore</button>` : ''}
+      </div>
+    </div>
+  </div>`;
+}
+
+function escHtml(t) {
+  return t.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+}
+
+function updateComment(id, val) {
+  const p = posts.find(x => x.id === id);
+  if (p) p.draftedComment = val;
+}
+
+function approvePost(id) {
+  const p = posts.find(x => x.id === id);
+  if (p) { p.status = "approved"; updateMetrics(); renderQueue(); }
+}
+
+function skipPost(id) {
+  const p = posts.find(x => x.id === id);
+  if (p) { p.status = "skipped"; updateMetrics(); renderQueue(); }
+}
+
+function restorePost(id) {
+  const p = posts.find(x => x.id === id);
+  if (p) { p.status = "pending"; renderQueue(); }
+}
+
+function copyComment(id) {
+  const p = posts.find(x => x.id === id);
+  if (p && p.draftedComment) {
+    navigator.clipboard.writeText(p.draftedComment).catch(() => {});
+    showToast("Copied to clipboard");
+  }
+}
+
+function renderApproved() {
+  const list = document.getElementById("approved-list");
+  const approved = posts.filter(p => p.status === "approved");
+  if (!approved.length) {
+    list.innerHTML = `<div class="empty"><i class="ti ti-check" aria-hidden="true"></i>No approved comments yet.</div>`;
+    return;
+  }
+  list.innerHTML = approved.map(p => `
+    <div class="post-card approved">
+      <div class="post-top">
+        <div class="post-meta">
+          <div class="post-subreddit">${p.sub}</div>
+          <div class="post-title">${p.title}</div>
+        </div>
+        <span class="score-badge score-high">approved</span>
+      </div>
+      <div class="comment-box">
+        <div class="comment-label"><i class="ti ti-check" aria-hidden="true"></i> Ready to post</div>
+        <div style="font-size:13px;line-height:1.6;white-space:pre-wrap;">${escHtml(p.draftedComment)}</div>
+      </div>
+      <div class="post-actions">
+        <div class="post-actions-right">
+          <button class="btn" onclick="copyComment(${p.id})"><i class="ti ti-copy" aria-hidden="true"></i> Copy</button>
+          <button class="btn" onclick="openLink('${p.url}')"><i class="ti ti-external-link" aria-hidden="true"></i> Open on Reddit</button>
+        </div>
+      </div>
+    </div>
+  `).join("");
+}
+
+async function draftComment(id) {
+  const p = posts.find(x => x.id === id);
+  if (!p) return;
+  const key = config.apiKey || document.getElementById("cfg-key").value;
+  p._drafting = true;
+  renderQueue();
+  const prompt = `You are helping a developer promote their WhatsApp API product on Reddit, but ONLY by being genuinely helpful.
+
+Product: ${config.url}
+What it does: ${config.desc}
+Style guide: ${config.style}
+
+Reddit post from ${p.sub}:
+Title: "${p.title}"
+Body: "${p.body}"
+
+Write a Reddit comment that:
+1. Actually answers or engages with their question helpfully
+2. If relevant, naturally mentions this API as something that could help — don't force it if it doesn't fit
+3. Sounds like a real developer, not marketing copy
+4. Is 3-5 sentences max
+5. Ends with the URL only if mentioning the product
+
+Reply with ONLY the comment text. No quotes. No preamble.`;
+
+  try {
+    const res = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        model: "claude-sonnet-4-20250514",
+        max_tokens: 1000,
+        messages: [{ role: "user", content: prompt }]
+      })
+    });
+    const data = await res.json();
+    const text = data.content?.find(b => b.type === "text")?.text || "Could not draft comment.";
+    p.draftedComment = text.trim();
+  } catch(e) {
+    p.draftedComment = "Error drafting comment. Check your API key in Settings.";
+  }
+  p._drafting = false;
+  renderQueue();
+}
+
+async function startScan() {
+  if (scanning) return;
+  scanning = true;
+  const btn = document.getElementById("scan-btn");
+  btn.disabled = true;
+  btn.innerHTML = `<span class="spinner"></span> Scanning...`;
+
+  await new Promise(r => setTimeout(r, 900));
+
+  const newPosts = DEMO_POSTS.map((p, i) => ({
+    ...p,
+    id: Date.now() + i,
+    status: "pending",
+    draftedComment: "",
+    _drafting: false
+  }));
+  posts = [...newPosts, ...posts];
+  updateMetrics();
+  renderQueue();
+  renderSubTags();
+
+  scanning = false;
+  btn.disabled = false;
+  btn.innerHTML = `<i class="ti ti-refresh" aria-hidden="true"></i> Scan Reddit`;
+
+  setTimeout(() => {
+    sendPrompt("The Reddit scan found 5 posts. How should I prioritize which ones to comment on first?");
+  }, 300);
+}
+
+function showToast(msg) {
+  const t = document.getElementById("copy-toast");
+  t.textContent = msg;
+  t.classList.add("show");
+  setTimeout(() => t.classList.remove("show"), 2000);
+}
+
+renderSubTags();
+renderQueue();
+updateMetrics();
+document.getElementById("cfg-url").value = config.url;
+document.getElementById("cfg-desc").value = config.desc;
+document.getElementById("cfg-style").value = config.style;
+</script>
