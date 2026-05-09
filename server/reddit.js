@@ -49,6 +49,7 @@ async function getToken() {
 
 // --- User OAuth (authorization code flow) ---
 function getRedirectUri() {
+  if (process.env.APP_URL) return `${process.env.APP_URL}/auth/reddit/callback`;
   const port = process.env.PORT || 3000;
   return `http://localhost:${port}/auth/reddit/callback`;
 }
