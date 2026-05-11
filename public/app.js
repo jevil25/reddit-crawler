@@ -216,22 +216,24 @@ async function saveConfig() {
   }
 }
 
-function addSub() {
+async function addSub() {
   const inp = document.getElementById('new-sub');
-  const val = inp.value.trim().replace(/^r\//, '');
+  const val = inp.value.trim().replace(/^r\\/, '');
   if (!val) return;
   const subs = JSON.parse(config.subreddits || '[]');
   if (!subs.includes(val)) {
     subs.push(val);
     config.subreddits = JSON.stringify(subs);
+    await saveConfig();
     renderConfigForm();
   }
   inp.value = '';
 }
 
-function removeSub(sub) {
+async function removeSub(sub) {
   const subs = JSON.parse(config.subreddits || '[]').filter(s => s !== sub);
   config.subreddits = JSON.stringify(subs);
+  await saveConfig();
   renderConfigForm();
 }
 
