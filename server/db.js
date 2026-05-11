@@ -40,7 +40,7 @@ db.exec(`
 
 // --- Seed defaults ---
 const defaults = {
-  subreddits: JSON.stringify(['whatsapp','nocode','SaaS','entrepreneur','webdev','n8n','zapier','learnprogramming','selfhosted']),
+  subreddits: JSON.stringify(['nocode','entrepreneur','webdev','n8n','zapier','selfhosted','webdevelopment','sideproject','openclaw','opensource','startups','programming','technology']),
   product_url: 'whatsapp-messaging.retentionstack.agency',
   product_desc: 'A WhatsApp Messaging Bot API on RapidAPI that lets developers send messages, build bots, and automate WhatsApp workflows without the hassle of setting up their own infrastructure.',
   comment_style: 'Be helpful and genuine. Answer their actual question first. Mention the API naturally at the end only if it directly solves their problem. No hard sell.',
