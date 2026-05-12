@@ -93,6 +93,7 @@ Write a Reddit comment that:
 3. Sounds like a real developer, not marketing copy
 4. Is 3-5 sentences max
 5. Ends with the full URL (including https://) only if mentioning the product — never just the domain name
+6. Add rapid api link as well: https://rapidapi.com/jevil257/api/whatsapp-messaging-bot
 
 Reply with ONLY the comment text. No quotes. No preamble.`;
 
