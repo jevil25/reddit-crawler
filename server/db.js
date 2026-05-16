@@ -40,9 +40,39 @@ db.exec(`
 
 // --- Seed defaults ---
 const defaults = {
-  subreddits: JSON.stringify(['nocode','entrepreneur','webdev','n8n','zapier','selfhosted','webdevelopment','sideproject','openclaw','opensource','startups','programming','technology']),
+  subreddits: JSON.stringify([
+    // High traffic dev/API/tools
+    'programming',
+    'webdev',
+    'node',
+    'Python',
+    'javascript',
+    'typescript',
+    
+    // Automation & no-code adjacent (higher traffic alternatives)
+    'n8n',
+    'zapier',
+    'automation',
+    'selfhosted',
+    
+    // Builder/founder communities
+    'startups',
+    'SideProject',
+    'indiehackers',
+    'EntrepreneurRideAlong',
+    'microsaas',
+    
+    // API/messaging specific
+    'chatbots',
+    'botdevelopment',
+    'twilio',   // devs looking for messaging alternatives
+
+    // Broad tech
+    'technology',
+    'opensource'
+  ]),
   product_url: 'whatsapp-messaging.retentionstack.agency',
-  product_desc: 'A WhatsApp Messaging Bot API on RapidAPI that lets developers send messages, build bots, and automate WhatsApp workflows without the hassle of setting up their own infrastructure.',
+  product_desc: 'A WhatsApp Messaging Bot API on RapidAPI that lets developers send messages, build bots, and automate WhatsApp workflows without the hassle of setting up their own infrastructure. The Mega plan offers 1,000,000 requests per month for just $100 USD.',
   comment_style: 'Be helpful and genuine. Answer their actual question first. Mention the API naturally at the end only if it directly solves their problem. No hard sell.',
   scan_interval: '0 */2 * * *',
   max_post_age_hours: '48'
